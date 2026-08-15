@@ -1,3 +1,6 @@
+import {typePin} from "./pin_catalog.js";
+
+
 const DEFAULT_TYPE_NAMES = new Set([
     "Alpha Pal",
     "Bounty",
@@ -8,7 +11,7 @@ const DEFAULT_TYPE_NAMES = new Set([
     "Treasure Map",
     "Watchtower",
 ]);
-const DEFAULT_CATEGORIES = new Set(["Collectibles", "Eggs"]);
+const DEFAULT_CATEGORIES = new Set(["Collectibles"]);
 
 
 /** Returns the type IDs shown when the application first loads. */
@@ -100,13 +103,30 @@ export function createTypeFilter(
             }
             emit();
         });
-        const swatch = document.createElement("span");
-        swatch.className = "type-swatch";
-        swatch.style.backgroundColor = type.pin_color;
+        const symbol = document.createElement("span");
+        symbol.className = "type-symbol";
+        const pin = typePin(type.name);
+        if(pin === undefined)
+        {
+            const swatch = document.createElement("span");
+            swatch.className = "type-swatch";
+            swatch.style.backgroundColor = type.pin_color;
+            symbol.append(swatch);
+        }
+        else
+        {
+            const image = document.createElement("img");
+            image.className = "type-pin";
+            image.src = pin.url;
+            image.width = pin.size[0];
+            image.height = pin.size[1];
+            image.alt = "";
+            symbol.append(image);
+        }
         const label = document.createElement("label");
         label.htmlFor = input.id;
         label.textContent = `${type.name} (${counts.get(type.id)})`;
-        row.append(input, swatch, label);
+        row.append(input, symbol, label);
         fieldset.append(row);
         inputs.set(type.id, input);
     }

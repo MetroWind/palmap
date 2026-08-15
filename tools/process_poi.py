@@ -36,6 +36,10 @@ PALETTE = (
     "#0e7490", "#a21caf", "#4d7c0f", "#c2410c", "#4338ca",
 )
 ID_PATTERN = re.compile(r"^[A-Za-z0-9_-]{8}$")
+# POI types intentionally omitted from generated map data.
+IGNORED_POI_TYPES = frozenset({
+    "Yakumo Effigy",
+})
 
 
 class ConversionError(Exception):
@@ -339,6 +343,7 @@ def buildDataset(parsed, source_bytes, metadata, strict=False, warn=None):
         "output_records": 0,
         "deduplicated": 0,
         "excluded_out_of_bounds": 0,
+        "ignored": 0,
     }
     types = {}
     pois = {}
@@ -353,6 +358,9 @@ def buildDataset(parsed, source_bytes, metadata, strict=False, warn=None):
             type_name = plainText(record.get("type"))
             if not name or not type_name:
                 raise ConversionError("record requires non-empty item and type")
+            if type_name in IGNORED_POI_TYPES:
+                statistics["ignored"] += 1
+                continue
             type_id = typeSlug(type_name)
             category = _category(parsed["iconLookup"], type_name)
             source_position, unused_raw, map_position = _coordinate(

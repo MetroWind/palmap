@@ -1,5 +1,8 @@
 import {createMapView} from "./map_view.js";
-import {loadPoiData} from "./poi_repository.js";
+import {
+    loadAlphaPalPins,
+    loadPoiData,
+} from "./poi_repository.js";
 import {
     createTypeFilter,
     defaultVisibleTypeIds,
@@ -26,9 +29,14 @@ async function start()
     try
     {
         status.textContent = "Loading map data...";
-        const data = await loadPoiData("data/poi_data.json");
+        const [data, portrait_pins] = await Promise.all([
+            loadPoiData("data/poi_data.json"),
+            loadAlphaPalPins("data/alpha_pal_pin_urls.json"),
+        ]);
         const default_visible = defaultVisibleTypeIds(data.types);
-        const view = createMapView(map_element);
+        const view = createMapView(map_element, {
+            portraitPins: portrait_pins,
+        });
         view.setPois(data.pois, data.types);
         const update = (visible) =>
         {

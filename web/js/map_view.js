@@ -1,3 +1,6 @@
+import {typePin} from "./pin_catalog.js";
+
+
 const MAP_SIZE = 256;
 const TRANSPARENT_TILE =
     "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=";
@@ -74,6 +77,33 @@ function markerWeight(zoom)
 }
 
 
+function poiIcon(poi, portrait_pins)
+{
+    let pin;
+    if(poi.type_name === "Alpha Pal"
+        && Object.hasOwn(portrait_pins, poi.name))
+    {
+        pin = {
+            url: portrait_pins[poi.name],
+            size: [32, 32],
+        };
+    }
+    else
+    {
+        pin = typePin(poi.type_name);
+    }
+    if(pin === undefined)
+    {
+        return null;
+    }
+    return L.icon({
+        iconUrl: pin.url,
+        iconSize: pin.size,
+        iconAnchor: [pin.size[0] / 2, pin.size[1] / 2],
+    });
+}
+
+
 /** Creates and returns the Palmap map view. */
 export function createMapView(element, options = {})
 {
@@ -82,6 +112,7 @@ export function createMapView(element, options = {})
         throw new Error("Leaflet did not load.");
     }
     const bounds = L.latLngBounds([[0, 0], [MAP_SIZE, MAP_SIZE]]);
+    const portrait_pins = options.portraitPins ?? Object.freeze({});
     const map = L.map(element, {
         crs: L.CRS.Simple,
         minZoom: 0,
@@ -115,8 +146,11 @@ export function createMapView(element, options = {})
         const zoom = map.getZoom();
         for(const marker of markers.values())
         {
-            marker.setRadius(markerRadius(zoom));
-            marker.setStyle({weight: markerWeight(zoom)});
+            if(marker instanceof L.CircleMarker)
+            {
+                marker.setRadius(markerRadius(zoom));
+                marker.setStyle({weight: markerWeight(zoom)});
+            }
         }
     });
     map.fitBounds(bounds);
@@ -141,15 +175,22 @@ export function createMapView(element, options = {})
                 MAP_SIZE - poi.map_position.y,
                 poi.map_position.x,
             ];
-            const marker = L.circleMarker(position, {
-                renderer,
-                radius: options.markerRadius ?? markerRadius(map.getZoom()),
-                color: "#ffffff",
-                weight: markerWeight(map.getZoom()),
-                fillColor: colors.get(poi.type_id),
-                fillOpacity: 0.8,
-                bubblingMouseEvents: false,
-            });
+            const icon = poiIcon(poi, portrait_pins);
+            const marker = icon === null
+                ? L.circleMarker(position, {
+                    renderer,
+                    radius: options.markerRadius
+                        ?? markerRadius(map.getZoom()),
+                    color: "#ffffff",
+                    weight: markerWeight(map.getZoom()),
+                    fillColor: colors.get(poi.type_id),
+                    fillOpacity: 0.8,
+                    bubblingMouseEvents: false,
+                })
+                : L.marker(position, {
+                    icon,
+                    bubblingMouseEvents: false,
+                });
             marker.on("click", () =>
             {
                 selected_id = poi.id;

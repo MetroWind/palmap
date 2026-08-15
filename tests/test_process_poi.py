@@ -114,6 +114,23 @@ class ProcessPoiTest(unittest.TestCase):
         self.assertEqual(1, len(dataset["pois"]))
         self.assertTrue(warnings)
 
+    def test_ignored_poi_type_does_not_emit_a_poi_or_type(self):
+        parsed = process_poi.parseSource(self.source)
+        parsed["fixedDungeon"][0]["item"] = "Yakumo Effigy"
+        parsed["fixedDungeon"][0]["type"] = "Yakumo Effigy"
+        dataset = process_poi.buildDataset(
+            parsed, self.source_bytes, self.metadata
+        )
+        self.assertEqual(1, dataset["generation"]["statistics"]["ignored"])
+        self.assertFalse(any(
+            poi["type_name"] == "Yakumo Effigy"
+            for poi in dataset["pois"]
+        ))
+        self.assertFalse(any(
+            item["name"] == "Yakumo Effigy"
+            for item in dataset["types"]
+        ))
+
     def test_atomic_write_replaces_complete_json(self):
         with tempfile.TemporaryDirectory() as directory:
             output = Path(directory) / "data.json"

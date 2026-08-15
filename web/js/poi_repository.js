@@ -84,3 +84,43 @@ export async function loadPoiData(url)
     }
     return deepFreeze(data);
 }
+
+
+/** Loads and validates the local Alpha Pal portrait-pin mapping. */
+export async function loadAlphaPalPins(url)
+{
+    let response;
+    try
+    {
+        response = await fetch(url);
+    }
+    catch(error)
+    {
+        throw new Error("Alpha Pal pins could not be requested.", {
+            cause: error,
+        });
+    }
+    if(!response.ok)
+    {
+        throw new Error(`Alpha Pal pin request failed (${response.status}).`);
+    }
+    const data = await response.json();
+    requireObject(data, "Alpha Pal pin manifest");
+    requireObject(data.pins, "Alpha Pal pins");
+    if(data.schema_version !== 1)
+    {
+        throw new Error("This Alpha Pal pin schema is not supported.");
+    }
+    const urls = new Set();
+    for(const [name, pin_url] of Object.entries(data.pins))
+    {
+        if(name.length === 0 || typeof pin_url !== "string"
+            || !/^images\/pal_pins\/[a-z0-9_]+\.png$/.test(pin_url)
+            || urls.has(pin_url))
+        {
+            throw new Error("Alpha Pal pin manifest contains invalid data.");
+        }
+        urls.add(pin_url);
+    }
+    return deepFreeze(data.pins);
+}

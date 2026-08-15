@@ -30,9 +30,37 @@ python3 tools/generate_tiles.py \
     --output-dir web/tiles
 ```
 
-Both generated directories are deployable static assets. Serve the repository
-over HTTP; browser modules and JSON loading are not supported through
-`file://`:
+## Prepare Pal portrait pins
+
+Canonical portrait URLs for every current Alpha Pal are recorded in
+`source/alpha_pal_portrait_urls.json`.
+
+Download and process a wiki portrait into a 32-by-32 circular pin with a black
+background and one-pixel white outline:
+
+```shell
+python3 tools/create_pal_pin.py \
+    --url 'https://palworld.wiki.gg/images/Chillet_icon.png?format=original' \
+    --level 11 \
+    --output web/images/pal_pins/chillet.png
+```
+
+The tool requires `curl` and ImageMagick 7. It performs all image processing
+in one ImageMagick command. Generate the complete checked-in pin set and its
+runtime mapping with:
+
+```shell
+python3 tools/create_alpha_pal_pins.py \
+    --manifest source/alpha_pal_portrait_urls.json \
+    --poi-data web/data/poi_data.json \
+    --output-dir web/images/pal_pins \
+    --runtime-manifest web/data/alpha_pal_pin_urls.json
+```
+
+## Serve the map
+
+The generated directories are deployable static assets. Browser modules and
+JSON loading are not supported through `file://`:
 
 ```shell
 python3 -m http.server 8000 --directory web

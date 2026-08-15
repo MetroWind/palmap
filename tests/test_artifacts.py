@@ -2,6 +2,7 @@ import hashlib
 import json
 import math
 from pathlib import Path
+import struct
 import unittest
 
 
@@ -35,6 +36,10 @@ class ArtifactTest(unittest.TestCase):
             len(poi_ids),
             data["generation"]["statistics"]["output_records"]
         )
+        self.assertFalse(any(
+            poi["type_name"] == "Yakumo Effigy"
+            for poi in data["pois"]
+        ))
         known_types = set(type_ids)
         for poi in data["pois"]:
             self.assertIn(poi["type_id"], known_types)
@@ -42,6 +47,42 @@ class ArtifactTest(unittest.TestCase):
                 self.assertTrue(math.isfinite(value))
                 self.assertGreaterEqual(value, 0)
                 self.assertLessEqual(value, 256)
+
+    def test_alpha_pal_portrait_manifest(self):
+        data = json.loads((
+            ROOT / "web" / "data" / "poi_data.json"
+        ).read_text())
+        manifest = json.loads((
+            ROOT / "source" / "alpha_pal_portrait_urls.json"
+        ).read_text())
+        expected = {
+            poi["name"] for poi in data["pois"]
+            if poi["type_name"] == "Alpha Pal"
+        }
+        portraits = manifest["portraits"]
+        self.assertEqual(expected, set(portraits))
+        self.assertEqual(len(expected), manifest["alpha_pal_count"])
+        self.assertEqual(len(portraits), len(set(portraits.values())))
+        for url in portraits.values():
+            self.assertTrue(
+                url.startswith("https://palworld.wiki.gg/images/")
+            )
+
+        runtime = json.loads((
+            ROOT / "web" / "data" / "alpha_pal_pin_urls.json"
+        ).read_text())
+        self.assertEqual(1, runtime["schema_version"])
+        pins = runtime["pins"]
+        self.assertEqual(expected, set(pins))
+        self.assertEqual(len(pins), len(set(pins.values())))
+        for relative_path in pins.values():
+            self.assertRegex(
+                relative_path, r"^images/pal_pins/[a-z0-9_]+\.png$"
+            )
+            path = ROOT / "web" / relative_path
+            header = path.read_bytes()[:24]
+            self.assertEqual(b"\x89PNG\r\n\x1a\n", header[:8])
+            self.assertEqual((32, 32), struct.unpack(">II", header[16:24]))
 
     def test_tile_artifact(self):
         tiles = ROOT / "web" / "tiles"
@@ -61,6 +102,43 @@ class ArtifactTest(unittest.TestCase):
                 for x in range(limit) for y in range(limit)
             }
             self.assertTrue(all(path.is_file() for path in expected))
+
+    def test_type_pin_artifacts(self):
+        expected = {
+            "ancient_ruin.png": (20, 19),
+            "bounty.png": (40, 40),
+            "depresso_effigy.png": (17, 24),
+            "desert_egg.png": (18, 20),
+            "dungeon.png": (24, 18),
+            "enemy_camp.png": (20, 20),
+            "fast_travel.png": (40, 40),
+            "feybreak_egg.png": (18, 20),
+            "frozen_egg.png": (18, 20),
+            "grass_egg.png": (18, 20),
+            "herbil_effigy.png": (16, 20),
+            "journals.png": (15, 16),
+            "lamball_effigy.png": (20, 20),
+            "lifmunk_effigy.png": (20, 18),
+            "lunaris_effigy.png": (20, 19),
+            "munchill_effigy.png": (16, 20),
+            "pengullet_effigy.png": (17, 20),
+            "relaxaurus_effigy.png": (20, 20),
+            "rooby_effigy.png": (18, 24),
+            "sakura_egg.png": (18, 20),
+            "tanzee_effigy.png": (18, 20),
+            "tower.png": (32, 32),
+            "treasure_map.png": (20, 20),
+            "volcano_egg.png": (18, 20),
+            "watchtower.png": (17, 20),
+        }
+        directory = ROOT / "web" / "images" / "type_pins"
+        for name, size in expected.items():
+            with self.subTest(name=name):
+                header = (directory / name).read_bytes()[:24]
+                self.assertEqual(b"\x89PNG\r\n\x1a\n", header[:8])
+                self.assertEqual(
+                    size, struct.unpack(">II", header[16:24])
+                )
 
 
 if __name__ == "__main__":

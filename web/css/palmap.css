@@ -120,9 +120,9 @@ input:focus-visible
 .filter-row
 {
     display: grid;
-    grid-template-columns: auto auto 1fr;
+    grid-template-columns: auto 2.5rem 1fr;
     align-items: center;
-    min-height: 2rem;
+    min-height: 2.5rem;
     gap: 0.5rem;
 }
 
@@ -131,12 +131,28 @@ input:focus-visible
     cursor: pointer;
 }
 
+.type-symbol
+{
+    display: flex;
+    width: 2.5rem;
+    height: 2.5rem;
+    align-items: center;
+    justify-content: center;
+}
+
 .type-swatch
 {
     width: 0.75rem;
     height: 0.75rem;
     border: 1px solid #fff;
     border-radius: 50%;
+}
+
+.type-pin
+{
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
 }
 
 .map
