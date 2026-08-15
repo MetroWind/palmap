@@ -22,7 +22,7 @@ implemented during this milestone.
 
 The prototype must provide all of the following behavior:
 
-1. Display the local `world_map.webp` as a zoomable, pannable tiled map.
+1. Display the local `T_WorldMap.png` as a zoomable, pannable tiled map.
 2. Load normalized POIs from a local JSON file.
 3. Place POI pins at the correct map coordinates.
 4. Allow each POI type to be shown or hidden.
@@ -43,8 +43,8 @@ The prototype will not provide:
 - Final per-type artwork. Prototype pins use local CSS styling.
 - Text search, routing, navigation, or user-created markers.
 - A backend, database, authentication, or user accounts.
-- Automatic downloading of PalDB data in the browser.
-- Automatic downloading of map tiles or JavaScript libraries at runtime.
+- Automatic downloading of PalDB data or map tiles at runtime. Leaflet is
+  loaded from the pinned CDN described below.
 - Automated discovery of the Palworld game version represented by PalDB.
 - Perfect support for every optional field found in the upstream dataset.
 
@@ -55,7 +55,8 @@ but unsupported source fields do not automatically become product features.
 
 ### 4.1 Static runtime, explicit preparation
 
-The browser application consumes only repository-owned static assets. Python
+The browser application consumes repository-owned static assets and one
+explicitly pinned Leaflet CDN dependency. Python
 utilities perform source conversion and tile generation before the files are
 deployed. This separates two different concerns:
 
@@ -64,7 +65,8 @@ deployed. This separates two different concerns:
   browser.
 
 This is not a Node.js build pipeline. The browser source remains readable and
-is not bundled, transpiled, minified, or generated.
+is not bundled, transpiled, minified, or generated. Application data and map
+tiles remain local static assets.
 
 ### 4.2 Treat upstream JavaScript as untrusted data
 
@@ -109,11 +111,11 @@ The system has two execution phases:
 Preparation phase
 
 map_data_en.js --------> process_poi.py --------> poi_data.json
-world_map.webp --------> generate_tiles.py ----> tiles/{z}/{x}/{y}.webp
+T_WorldMap.png --------> generate_tiles.py ----> tiles/{z}/{x}/{y}.webp
 
 Static runtime
 
-index.html + CSS + JavaScript + vendored Leaflet
+index.html + CSS + JavaScript + pinned CDN Leaflet
                     |
                     +---- loads poi_data.json
                     +---- loads visible local map tiles
@@ -129,17 +131,21 @@ A release does not run either Python utility on the target HTTP server.
 Use [Leaflet](https://leafletjs.com/) with
 [`L.CRS.Simple`](https://leafletjs.com/examples/crs-simple/crs-simple.html).
 `L.CRS.Simple` represents a flat, non-geographic coordinate plane, which is
-appropriate because `world_map.webp` is an image rather than a geographic web
+appropriate because `T_WorldMap.png` is an image rather than a geographic web
 Mercator map.
 
 Leaflet provides the required tile loading, panning, zooming, marker layers,
-tooltips, and viewport bounds without requiring a hosted map service. Its CSS,
-JavaScript, and referenced image assets must be stored under `vendor/leaflet/`.
-The page must not load Leaflet from a CDN.
+tooltips, and viewport bounds without requiring a hosted map service. The
+prototype loads Leaflet 1.9.4 from these exact, non-floating CDN URLs:
 
-The exact Leaflet version must be documented in `vendor/leaflet/VERSION` and
-must not use a floating version reference. Updating Leaflet is an explicit
-maintenance operation.
+```text
+https://unpkg.com/leaflet@1.9.4/dist/leaflet.css
+https://unpkg.com/leaflet@1.9.4/dist/leaflet.js
+```
+
+The page therefore has a runtime dependency on the CDN, but it never loads
+PalDB data, map tiles, or application data from a remote service. Updating
+Leaflet is an explicit maintenance operation.
 
 ### 6.2 Browser language: JavaScript modules
 
@@ -198,7 +204,7 @@ The implementation uses the following layout:
 palmap/
 |-- index.html
 |-- prd.md
-|-- world_map.webp
+|-- T_WorldMap.png (local preparation input; not committed)
 |-- css/
 |   `-- palmap.css
 |-- js/
@@ -216,14 +222,10 @@ palmap/
 |-- tests/
 |   |-- fixtures/
 |   |   `-- map_data_sample.js
+|   |   `-- calibration_points.json
 |   |-- test_generate_tiles.py
 |   `-- test_process_poi.py
-|-- vendor/
-|   `-- leaflet/
-|       |-- VERSION
-|       |-- images/
-|       |-- leaflet.css
-|       `-- leaflet.js
+|-- README.md
 `-- designs/
     `-- design-0-prototype.md
 ```
@@ -361,9 +363,12 @@ The referenced coordinate documentation gives the raw-world midpoint as
 with:
 
 ```text
-raw_x = paldex_x * 459 - 123888
-raw_y = paldex_y * 459 + 158000
+raw_x = paldex_y * 459 - 123888
+raw_y = paldex_x * 459 + 158000
 ```
+
+The two axes are intentionally crossed: Paldex X corresponds to raw-world Y,
+and Paldex Y corresponds to raw-world X.
 
 These constants must be named, documented module constants rather than inline
 numeric literals:
@@ -379,8 +384,9 @@ coordinates.
 
 ### 11.3 Raw-to-map conversion
 
-Use the bounds in PalDB's `config` object rather than the older bounds in the
-coordinate note. At the time of design, the keys are:
+The repository's `T_WorldMap.png` is the 8192-by-8192 World Map texture
+extracted from the game. Use the following validated source-configuration
+keys as the texture's raw-world bounds:
 
 ```text
 landScapeRealPositionMin.X
@@ -392,13 +398,16 @@ landScapeRealPositionMax.Y
 For raw coordinate `(raw_x, raw_y)`, calculate normalized map coordinates:
 
 ```text
-map_x = 256 * (raw_x - raw_min_x) / (raw_max_x - raw_min_x)
-map_y = 256 * (raw_max_y - raw_y) / (raw_max_y - raw_min_y)
+map_x = 256 * (raw_y - raw_min_y) / (raw_max_y - raw_min_y)
+map_y = 256 * (raw_max_x - raw_x) / (raw_max_x - raw_min_x)
 ```
 
-The Y expression is inverted because image rows increase downward while raw
-world Y increases upward. `(map_y, map_x)` is passed to Leaflet because Leaflet
-uses latitude/longitude ordering even for `CRS.Simple`.
+The map's horizontal axis uses raw-world Y. The map's vertical image-row axis
+uses raw-world X in reverse, because image rows increase downward while the
+map's raw X coordinate increases upward. `map_position.y` remains an image row,
+increasing downward. Before passing a marker to Leaflet, convert it to
+`[256 - map_position.y, map_position.x]`: Leaflet's `CRS.Simple` latitude axis
+increases upward even though Leaflet still uses latitude/longitude ordering.
 
 The result remains a floating-point number; rounding would cause visible
 position loss at high zoom. A map unit corresponds to 32 source-image pixels
@@ -484,8 +493,8 @@ Every POI receives the same compact output-ID format, whether or not PalDB
 provides an upstream ID. The input to the hash differs according to the source
 record.
 
-When a non-empty scalar `id` is present, construct this canonical identity
-object from the exact upstream value:
+When a non-empty scalar `id` is present and unique for the source type,
+construct this canonical identity object from the exact upstream value:
 
 ```json
 {
@@ -498,9 +507,12 @@ object from the exact upstream value:
 Including the type prevents unrelated upstream ID namespaces from colliding.
 Retain the upstream ID as its exact JSON scalar type and value; for strings,
 case and punctuation are significant. Reject object, array, boolean, null, and
-empty-string IDs. This keeps numeric `1` distinct from string `"1"`.
+empty-string IDs. This keeps numeric `1` distinct from string `"1"`. A scalar
+ID reused by multiple records of the same type is not a suitable identifier;
+those records use the derived identity below and emit a conversion warning.
 
-For a record without `id`, build a canonical identity object containing:
+For a record without a suitable `id`, build a canonical identity object
+containing:
 
 ```json
 {
@@ -940,10 +952,15 @@ Configure the map with:
 }
 ```
 
-The tile layer uses levels 0 through 5 and sets `maxNativeZoom: 5`. Zooms 6
-and 7 enlarge native tiles for close inspection without generating additional
-tiles. Set bounds to `[[0, 0], [256, 256]]`, fit those bounds initially, and
-constrain panning with a small padding so the map cannot be lost completely.
+The tile layer uses levels 0 through 5 and sets `maxNativeZoom: 5`. The local
+tile URL adapter translates Leaflet's `CRS.Simple` tile rows into the
+top-down XYZ rows in `tiles/{z}/{x}/{y}.webp`; at a native zoom, its source
+row is `leaflet_row + 2 ** zoom`. At zooms 6 and 7 it selects the corresponding
+native tile and lets Leaflet enlarge it. Out-of-range requests resolve to a
+transparent local tile instead of generating HTTP 404s when the viewport is
+larger than the image. Set bounds to `[[0, 0], [256, 256]]`, fit those bounds
+initially, and constrain panning with a small padding so the map cannot be
+lost completely.
 
 ### 17.3 `type_filter.js`
 
@@ -1203,7 +1220,8 @@ Then verify in each supported browser:
 9. Tooltip name and type match the source record.
 10. Optional details appear only when present.
 11. Hiding the selected type closes its tooltip.
-12. No runtime request is made to PalDB, a CDN, or a hosted map service.
+12. No runtime request is made to PalDB or a hosted map service; the only
+    remote runtime dependency is the pinned Leaflet CDN in section 6.1.
 13. Reloading resets filters to all-visible as designed.
 14. Narrow-screen layout leaves the map usable.
 
@@ -1217,7 +1235,10 @@ The prototype passes coordinate validation only when:
 - At least two calibration records use source `ipos` coordinates.
 - At least two use source `pos` coordinates.
 - At least two represent newer outlying land areas.
-- There is no consistent axis inversion, rotation, scale, or offset error.
+- There is no consistent axis inversion, rotation, scale, or offset error
+  relative to `T_WorldMap.png`. The image-bound calibration must specifically
+  include the small western oil-rig island, whose dense POI cluster is a
+  sensitive check for the image offset.
 
 Record the reviewed calibration IDs and result in the prototype completion
 notes.
@@ -1232,7 +1253,7 @@ notes.
 3. Run `process_poi.py` with complete provenance arguments.
 4. Review warnings and summary counts.
 5. Run converter and artifact tests.
-6. Run `generate_tiles.py` against `world_map.webp`.
+6. Run `generate_tiles.py` against `T_WorldMap.png`.
 7. Verify the tile manifest and tests.
 8. Serve the repository over HTTP.
 9. Complete browser and coordinate acceptance checks.
@@ -1262,13 +1283,13 @@ Primary security controls are:
 - Permit only expected JSON-compatible assignments.
 - Convert all upstream markup to plain text during preparation.
 - Use `textContent` for runtime rendering of upstream strings.
-- Vendor runtime dependencies instead of loading mutable remote scripts.
+- Pin the Leaflet runtime to an exact CDN version rather than a floating URL.
 - Keep source and generated coordinates numeric and finite.
 - Restrict output replacement to explicit, validated paths.
 - Invoke ImageMagick with an argument list and `shell=False`.
 
 The HTTP server remains responsible for normal static-site headers. A strict
-Content Security Policy is desirable after vendored Leaflet behavior and CSS
+Content Security Policy is desirable after CDN loading and Leaflet CSS
 requirements are known, but it is not a prototype acceptance blocker.
 
 ## 25. Accessibility
@@ -1291,7 +1312,7 @@ list would provide equivalent access but is outside this milestone.
 
 ### 26.1 Loading one full image
 
-Leaflet can display `world_map.webp` through an image overlay. This is simpler,
+Leaflet can display `T_WorldMap.png` through an image overlay. This is simpler,
 but a tile pyramid gives predictable incremental loading and matches the
 intended production direction. Tile generation is therefore included in the
 prototype preparation workflow.
@@ -1393,8 +1414,9 @@ The prototype is complete when all of these statements are true:
    version metadata.
 3. Every emitted POI has a unique stable ID and both source and map positions.
 4. A documented Python command generates a complete local lossless-WebP tile
-   pyramid and manifest from `world_map.webp` without a second lossy encoding.
-5. The application makes no runtime request outside its static-file origin.
+   pyramid and manifest from `T_WorldMap.png` without a second lossy encoding.
+5. The application makes no runtime request outside its static-file origin
+   other than the explicitly pinned Leaflet CDN assets.
 6. The map can be viewed, panned, and zoomed on desktop and touch layouts.
 7. Exact POI types can be independently shown and hidden.
 8. Clicking or touching a pin opens an anchored tooltip containing at least
@@ -1417,7 +1439,7 @@ the next:
 5. Add JSON serialization, provenance, summaries, and atomic output.
 6. Generate and review the first complete POI artifact.
 7. Implement and test the tile generator.
-8. Vendor Leaflet and build the basic tiled map.
+8. Load the pinned Leaflet CDN assets and build the basic tiled map.
 9. Add normalized JSON loading and validation.
 10. Add markers, per-type layer groups, and filters.
 11. Add anchored tooltips and optional details.

@@ -1,0 +1,98 @@
+[
+    {
+        "source_id": "REGION_Grass_1_Village",
+        "system": "paldex",
+        "source": {"x": 75, "y": -480},
+        "expected_map": {"x": 162.0011043622, "y": 122.5591165102},
+        "tolerance_native_pixels": 16,
+        "reason": "Small Settlement symbol in the central archipelago"
+    },
+    {
+        "source_id": "REGION_Desert_1_Village",
+        "system": "paldex",
+        "source": {"x": 349, "y": 353},
+        "expected_map": {"x": 184.2236996135, "y": 54.9991827719},
+        "tolerance_native_pixels": 16,
+        "reason": "Duneshelter symbol in the north-east desert"
+    },
+    {
+        "source_id": "REGION_Volcano_1_Village",
+        "system": "paldex",
+        "source": {"x": -474, "y": -750},
+        "expected_map": {"x": 117.4748094975, "y": 144.4572943125},
+        "tolerance_native_pixels": 16,
+        "reason": "Fisherman's Point symbol in the southern volcano"
+    },
+    {
+        "source_id": "REGION_Oilrig_1",
+        "system": "paldex",
+        "source": {"x": 579, "y": -423},
+        "expected_map": {"x": 202.8777029266, "y": 117.9361678631},
+        "tolerance_native_pixels": 16,
+        "reason": "Eastern level-55 oil rig"
+    },
+    {
+        "source_id": "REGION_Oilrig_3",
+        "system": "paldex",
+        "source": {"x": -1722, "y": -1462},
+        "expected_map": {"x": 16.2565654335, "y": 202.2036002209},
+        "tolerance_native_pixels": 16,
+        "reason": "Small western oil-rig island; sensitive to image offset"
+    },
+    {
+        "source_id": "REGION_Frost_1",
+        "system": "paldex",
+        "source": {"x": -186, "y": 396},
+        "expected_map": {"x": 140.8328658200, "y": 51.5116951960},
+        "tolerance_native_pixels": 16,
+        "reason": "Astral Mountains in the snowy north"
+    },
+    {
+        "source_id": "REGION_Darkisland_FT05",
+        "system": "paldex",
+        "source": {"x": -1115, "y": -1355},
+        "expected_map": {"x": 65.4869133076, "y": 193.5254334622},
+        "tolerance_native_pixels": 16,
+        "reason": "Oculus Gate on the newer south-west island"
+    },
+    {
+        "source_id": "REGION_New_SmallIsland02",
+        "system": "paldex",
+        "source": {"x": 793, "y": 455},
+        "expected_map": {"x": 220.2340364440, "y": 46.7265378244},
+        "tolerance_native_pixels": 16,
+        "reason": "Flamepulse Islet on the newer eastern edge"
+    },
+    {
+        "source_id": "raw:fort_ruins",
+        "system": "raw_world",
+        "source": {"x": -302825, "y": 241060},
+        "expected_map": {"x": 170.5948094975, "y": 115.2468249586},
+        "tolerance_native_pixels": 16,
+        "reason": "Fort Ruins fast-travel symbol near the center"
+    },
+    {
+        "source_id": "raw:flamepulse_islet",
+        "system": "raw_world",
+        "source": {"x": 63443, "y": 507395},
+        "expected_map": {"x": 217.6556598564, "y": 50.5280176698},
+        "tolerance_native_pixels": 16,
+        "reason": "Raw-coordinate Flamepulse Islet fast travel"
+    },
+    {
+        "source_id": "raw:feybreak_tower",
+        "system": "raw_world",
+        "source": {"x": -888080, "y": -433080},
+        "expected_map": {"x": 51.4756488128, "y": 218.6601877416},
+        "tolerance_native_pixels": 16,
+        "reason": "Feybreak Tower entrance in the south-west"
+    },
+    {
+        "source_id": "raw:isle_glacial_core",
+        "system": "raw_world",
+        "source": {"x": 168489, "y": 221798},
+        "expected_map": {"x": 167.1912534511, "y": 31.9666040861},
+        "tolerance_native_pixels": 16,
+        "reason": "Northern Isle of the Glacial Core fast travel"
+    }
+]

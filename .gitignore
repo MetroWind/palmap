@@ -1,0 +1,5 @@
+__pycache__/
+*.py[cod]
+.tiles.staging-*
+tiles.backup-*
+T_WorldMap.png

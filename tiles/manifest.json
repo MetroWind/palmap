@@ -1,0 +1,20 @@
+{
+  "source_sha256": "f02560929cf0f30ee16ba2d2693f9ca65ca5400db14e13bca862268092499b62",
+  "source_width": 8192,
+  "source_height": 8192,
+  "tile_size": 256,
+  "min_zoom": 0,
+  "max_zoom": 5,
+  "total_tile_count": 1365,
+  "generator": {
+    "program": "ImageMagick",
+    "version": "Version: ImageMagick 7.1.2-18 Q16-HDRI x86_64 23822 https://imagemagick.org"
+  },
+  "encoding": {
+    "format": "webp",
+    "lossless": true,
+    "quality": 100,
+    "method": 6,
+    "resize_filter": "Lanczos"
+  }
+}

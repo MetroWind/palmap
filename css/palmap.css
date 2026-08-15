@@ -1,0 +1,209 @@
+:root
+{
+    color-scheme: dark;
+    font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+    background: #101827;
+    color: #e5edf7;
+}
+
+*
+{
+    box-sizing: border-box;
+}
+
+html,
+body,
+.app-shell
+{
+    width: 100%;
+    height: 100%;
+    margin: 0;
+}
+
+.app-shell
+{
+    display: grid;
+    grid-template-columns: minmax(16rem, 21rem) 1fr;
+    overflow: hidden;
+}
+
+.filter-panel
+{
+    display: flex;
+    min-height: 0;
+    flex-direction: column;
+    background: #111c2d;
+    border-right: 1px solid #334155;
+    z-index: 1000;
+}
+
+.panel-header
+{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem;
+    border-bottom: 1px solid #334155;
+}
+
+h1
+{
+    margin: 0;
+    font-size: 1.5rem;
+}
+
+.status
+{
+    margin: 0.3rem 0 0;
+    color: #a9bad0;
+    font-size: 0.85rem;
+}
+
+.status.error
+{
+    color: #fecaca;
+}
+
+.filters
+{
+    overflow-y: auto;
+    padding: 0.75rem 1rem 2rem;
+}
+
+.filters fieldset
+{
+    margin: 0 0 1rem;
+    padding: 0;
+    border: 0;
+}
+
+.filters legend
+{
+    width: 100%;
+    margin-bottom: 0.4rem;
+    padding-bottom: 0.25rem;
+    border-bottom: 1px solid #334155;
+    color: #93c5fd;
+    font-weight: 700;
+}
+
+.filter-actions
+{
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+button
+{
+    padding: 0.45rem 0.7rem;
+    border: 1px solid #64748b;
+    border-radius: 0.35rem;
+    background: #233249;
+    color: inherit;
+    cursor: pointer;
+}
+
+button:hover
+{
+    background: #334155;
+}
+
+button:focus-visible,
+input:focus-visible
+{
+    outline: 3px solid #60a5fa;
+    outline-offset: 2px;
+}
+
+.filter-row
+{
+    display: grid;
+    grid-template-columns: auto auto 1fr;
+    align-items: center;
+    min-height: 2rem;
+    gap: 0.5rem;
+}
+
+.filter-row label
+{
+    cursor: pointer;
+}
+
+.type-swatch
+{
+    width: 0.75rem;
+    height: 0.75rem;
+    border: 1px solid #fff;
+    border-radius: 50%;
+}
+
+.map
+{
+    width: 100%;
+    height: 100%;
+    background: #07101e;
+}
+
+.leaflet-tooltip
+{
+    max-width: min(22rem, 80vw);
+    border: 1px solid #94a3b8;
+    background: #111827;
+    color: #f8fafc;
+}
+
+.poi-tooltip h2
+{
+    margin: 0 0 0.35rem;
+    font-size: 1rem;
+}
+
+.poi-tooltip p
+{
+    margin: 0.2rem 0;
+    white-space: normal;
+}
+
+.panel-toggle
+{
+    display: none;
+}
+
+@media(max-width: 44rem)
+{
+    .app-shell
+    {
+        display: grid;
+        grid-template-rows: auto 1fr;
+        grid-template-columns: 1fr;
+    }
+
+    .filter-panel
+    {
+        max-height: 45vh;
+        border-right: 0;
+        border-bottom: 1px solid #334155;
+    }
+
+    .panel-header
+    {
+        padding: 0.65rem 0.8rem;
+    }
+
+    .panel-toggle
+    {
+        display: block;
+    }
+
+    .filter-panel.is-collapsed .filters
+    {
+        display: none;
+    }
+
+    .filters
+    {
+        padding-bottom: 1rem;
+    }
+}
