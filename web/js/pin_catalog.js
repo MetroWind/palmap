@@ -79,6 +79,10 @@ const TYPE_PINS = new Map([
         url: "images/type_pins/sakura_egg.png",
         size: [18, 20],
     }],
+    ["Sunreach Egg", {
+        url: "images/type_pins/sunreach_egg.png",
+        size: [18, 20],
+    }],
     ["Tanzee Effigy", {
         url: "images/type_pins/tanzee_effigy.png",
         size: [18, 20],

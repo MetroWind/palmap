@@ -125,6 +125,7 @@ class ArtifactTest(unittest.TestCase):
             "relaxaurus_effigy.png": (20, 20),
             "rooby_effigy.png": (18, 24),
             "sakura_egg.png": (18, 20),
+            "sunreach_egg.png": (18, 20),
             "tanzee_effigy.png": (18, 20),
             "tower.png": (32, 32),
             "treasure_map.png": (20, 20),
