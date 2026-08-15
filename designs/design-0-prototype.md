@@ -110,12 +110,12 @@ The system has two execution phases:
 ```text
 Preparation phase
 
-map_data_en.js --------> process_poi.py --------> poi_data.json
-T_WorldMap.png --------> generate_tiles.py ----> tiles/{z}/{x}/{y}.webp
+map_data_en.js --------> process_poi.py --------> web/data/poi_data.json
+T_WorldMap.png --------> generate_tiles.py ----> web/tiles/{z}/{x}/{y}.webp
 
 Static runtime
 
-index.html + CSS + JavaScript + pinned CDN Leaflet
+web/index.html + CSS + JavaScript + pinned CDN Leaflet
                     |
                     +---- loads poi_data.json
                     +---- loads visible local map tiles
@@ -202,20 +202,21 @@ The implementation uses the following layout:
 
 ```text
 palmap/
-|-- index.html
 |-- prd.md
 |-- T_WorldMap.png (local preparation input; not committed)
-|-- css/
-|   `-- palmap.css
-|-- js/
-|   |-- app.js
-|   |-- map_view.js
-|   |-- poi_repository.js
-|   `-- type_filter.js
-|-- data/
-|   `-- poi_data.json
-|-- tiles/
-|   `-- {z}/{x}/{y}.webp
+|-- web/
+|   |-- index.html
+|   |-- css/
+|   |   `-- palmap.css
+|   |-- js/
+|   |   |-- app.js
+|   |   |-- map_view.js
+|   |   |-- poi_repository.js
+|   |   `-- type_filter.js
+|   |-- data/
+|   |   `-- poi_data.json
+|   `-- tiles/
+|       `-- {z}/{x}/{y}.webp
 |-- tools/
 |   |-- generate_tiles.py
 |   `-- process_poi.py
@@ -285,7 +286,7 @@ Example invocation:
 ```shell
 python3 tools/process_poi.py \
     --input source/map_data_en.js \
-    --output data/poi_data.json \
+    --output web/data/poi_data.json \
     --source-url https://paldb.cc/js/map_data_en.js \
     --retrieved-at 2026-08-12T23:18:37Z \
     --last-modified 'Wed, 12 Aug 2026 04:21:53 GMT' \
@@ -569,7 +570,7 @@ choosing or numbering them.
 
 ### 13.1 Top-level object
 
-`data/poi_data.json` has this shape:
+`web/data/poi_data.json` has this shape:
 
 ```json
 {
@@ -864,7 +865,7 @@ the short interval between renames can leave the backup beside the output;
 the next run detects this state and reports recovery instructions instead of
 guessing which tree to delete.
 
-The tool also writes `tiles/manifest.json` containing the source image
+The tool also writes `web/tiles/manifest.json` containing the source image
 SHA-256, dimensions, tile size, zoom range, total tile count, and this tool
 metadata:
 
@@ -901,7 +902,7 @@ empty path.
 
 ### 17.1 `poi_repository.js`
 
-This module owns loading and validating `data/poi_data.json`.
+This module owns loading and validating `web/data/poi_data.json`.
 
 Its public interface is:
 
@@ -1204,7 +1205,7 @@ update. Automated validation checks:
 Serve the repository with a static server, for example:
 
 ```shell
-python3 -m http.server 8000
+python3 -m http.server 8000 --directory web
 ```
 
 Then verify in each supported browser:

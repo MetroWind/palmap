@@ -12,7 +12,7 @@ class ArtifactTest(unittest.TestCase):
     """Validate checked-in deployable data and tile artifacts when present."""
 
     def test_real_poi_artifact(self):
-        data_path = ROOT / "data" / "poi_data.json"
+        data_path = ROOT / "web" / "data" / "poi_data.json"
         source_path = ROOT / "source" / "map_data_en.js"
         if not data_path.exists() or not source_path.exists():
             self.skipTest("real POI artifact or retained source is absent")
@@ -44,7 +44,7 @@ class ArtifactTest(unittest.TestCase):
                 self.assertLessEqual(value, 256)
 
     def test_tile_artifact(self):
-        tiles = ROOT / "tiles"
+        tiles = ROOT / "web" / "tiles"
         if not (tiles / "manifest.json").exists():
             self.skipTest("generated tile artifact is absent")
         manifest = json.loads((tiles / "manifest.json").read_text())

@@ -57,7 +57,7 @@ function createLocalTileLayer()
         maxNativeZoom: 5,
         noWrap: true,
         bounds: [[0, 0], [MAP_SIZE, MAP_SIZE]],
-        attribution: "Palworld map imagery via Palworld Wiki",
+        attribution: "Map imagery extracted from Palworld",
     });
 }
 

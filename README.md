@@ -13,7 +13,7 @@ source JavaScript:
 ```shell
 python3 tools/process_poi.py \
     --input source/map_data_en.js \
-    --output data/poi_data.json \
+    --output web/data/poi_data.json \
     --source-url https://paldb.cc/js/map_data_en.js \
     --retrieved-at 2026-08-14T12:00:00Z
 ```
@@ -27,7 +27,7 @@ source texture is ignored by Git; only its generated tiles are committed.
 ```shell
 python3 tools/generate_tiles.py \
     --input T_WorldMap.png \
-    --output-dir tiles
+    --output-dir web/tiles
 ```
 
 Both generated directories are deployable static assets. Serve the repository
@@ -35,10 +35,11 @@ over HTTP; browser modules and JSON loading are not supported through
 `file://`:
 
 ```shell
-python3 -m http.server 8000
+python3 -m http.server 8000 --directory web
 ```
 
-Then open `http://localhost:8000/`. Run the offline unit tests with:
+Then open `http://localhost:8000/`. For deployment, copy the contents of
+`web/` to the HTTP hosting directory. Run the offline unit tests with:
 
 ```shell
 python3 -m unittest discover -s tests -v
