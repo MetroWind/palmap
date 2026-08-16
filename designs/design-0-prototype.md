@@ -2,7 +2,7 @@
 
 ## 1. Document status
 
-- Status: Proposed
+- Status: Implemented
 - Scope: Prototype milestone
 - Product requirements: [`prd.md`](../prd.md)
 - Intended implementation language: Python 3 and browser-native JavaScript
