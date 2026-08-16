@@ -1,4 +1,5 @@
 import {typePin} from "./pin_catalog.js";
+import {isPoiId} from "./poi_id.js";
 
 
 const MAP_SIZE = 256;
@@ -6,7 +7,7 @@ const TRANSPARENT_TILE =
     "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=";
 
 
-function tooltipContent(poi)
+function tooltipContent(poi, completed, on_change)
 {
     const root = document.createElement("section");
     root.className = "poi-tooltip";
@@ -30,7 +31,19 @@ function tooltipContent(poi)
             root.append(detail);
         }
     }
-    return root;
+    const completion = document.createElement("label");
+    completion.className = "poi-completion";
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.checked = completed;
+    checkbox.addEventListener("change", () => on_change(checkbox.checked));
+    completion.append(checkbox);
+    const completion_text = document.createElement("span");
+    completion_text.textContent = "Done";
+    completion.append(completion_text);
+    root.append(completion);
+    L.DomEvent.disableClickPropagation(root);
+    return Object.freeze({root, checkbox});
 }
 
 
@@ -104,6 +117,22 @@ function poiIcon(poi, portrait_pins)
 }
 
 
+function applyCompletionStyle(marker, completed)
+{
+    if(marker instanceof L.CircleMarker)
+    {
+        marker.setStyle({
+            fillOpacity: completed ? 0.25 : 0.8,
+            opacity: completed ? 0.5 : 1,
+        });
+    }
+    else
+    {
+        marker.setOpacity(completed ? 0.45 : 1);
+    }
+}
+
+
 /** Creates and returns the Palmap map view. */
 export function createMapView(element, options = {})
 {
@@ -113,6 +142,11 @@ export function createMapView(element, options = {})
     }
     const bounds = L.latLngBounds([[0, 0], [MAP_SIZE, MAP_SIZE]]);
     const portrait_pins = options.portraitPins ?? Object.freeze({});
+    const on_completion_request = options.onCompletionRequest ?? (() => {});
+    if(typeof on_completion_request !== "function")
+    {
+        throw new TypeError("onCompletionRequest must be a function.");
+    }
     const map = L.map(element, {
         crs: L.CRS.Simple,
         minZoom: 0,
@@ -127,17 +161,21 @@ export function createMapView(element, options = {})
         permanent: false,
         direction: "top",
         offset: [0, -7],
+        interactive: true,
     });
     const groups = new Map();
     const markers = new Map();
     const pois = new Map();
+    const completed_ids = new Set();
     let selected_id = null;
+    let selected_checkbox = null;
     let visible_types = new Set();
 
     function closeTooltip()
     {
         map.closeTooltip(tooltip);
         selected_id = null;
+        selected_checkbox = null;
     }
 
     map.on("click", closeTooltip);
@@ -194,9 +232,29 @@ export function createMapView(element, options = {})
             marker.on("click", () =>
             {
                 selected_id = poi.id;
-                tooltip.setLatLng(position).setContent(tooltipContent(poi));
+                const content = tooltipContent(
+                    poi, completed_ids.has(poi.id), (completed) =>
+                    {
+                        try
+                        {
+                            on_completion_request(poi.id, completed);
+                        }
+                        finally
+                        {
+                            if(selected_id === poi.id
+                                && selected_checkbox !== null)
+                            {
+                                selected_checkbox.checked =
+                                    completed_ids.has(poi.id);
+                            }
+                        }
+                    }
+                );
+                selected_checkbox = content.checkbox;
+                tooltip.setLatLng(position).setContent(content.root);
                 tooltip.openOn(map);
             });
+            applyCompletionStyle(marker, completed_ids.has(poi.id));
             marker.addTo(group);
             markers.set(poi.id, marker);
             pois.set(poi.id, poi);
@@ -231,11 +289,66 @@ export function createMapView(element, options = {})
         visible_types = next;
     }
 
+    function setCompletedIds(ids)
+    {
+        const next = new Set();
+        for(const id of ids)
+        {
+            if(!isPoiId(id))
+            {
+                throw new TypeError("Completed IDs contain an invalid POI ID.");
+            }
+            next.add(id);
+        }
+        completed_ids.clear();
+        for(const id of next)
+        {
+            completed_ids.add(id);
+        }
+        for(const [id, marker] of markers)
+        {
+            applyCompletionStyle(marker, completed_ids.has(id));
+        }
+        if(selected_id !== null && selected_checkbox !== null)
+        {
+            selected_checkbox.checked = completed_ids.has(selected_id);
+        }
+    }
+
+    function setPoiCompleted(poi_id, completed)
+    {
+        if(!isPoiId(poi_id) || typeof completed !== "boolean")
+        {
+            throw new TypeError("A valid POI ID and boolean are required.");
+        }
+        if(completed)
+        {
+            completed_ids.add(poi_id);
+        }
+        else
+        {
+            completed_ids.delete(poi_id);
+        }
+        const marker = markers.get(poi_id);
+        if(marker !== undefined)
+        {
+            applyCompletionStyle(marker, completed);
+        }
+        if(selected_id === poi_id && selected_checkbox !== null)
+        {
+            selected_checkbox.checked = completed;
+        }
+    }
+
     return Object.freeze({
         /** Replaces every POI and type definition in the view. */
         setPois,
         /** Updates the set of visible exact type IDs. */
         setVisibleTypes,
+        /** Replaces the complete visual completion set. */
+        setCompletedIds,
+        /** Updates one POI's visual completion state. */
+        setPoiCompleted,
         /** Fits the full source image into the viewport. */
         fitBounds: () => map.fitBounds(bounds),
         /** Recalculates map dimensions after a layout change. */

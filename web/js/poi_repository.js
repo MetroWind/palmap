@@ -1,4 +1,4 @@
-const ID_PATTERN = /^[A-Za-z0-9_-]{8}$/;
+import {isPoiId} from "./poi_id.js";
 
 
 function requireObject(value, label)
@@ -43,6 +43,11 @@ export async function loadPoiData(url)
     {
         throw new Error("This map data schema is not supported.");
     }
+    if(typeof data.data_version !== "string"
+        || data.data_version.length === 0 || data.data_version.length > 128)
+    {
+        throw new Error("Map data has an invalid data version.");
+    }
     if(!Array.isArray(data.types) || !Array.isArray(data.pois))
     {
         throw new Error("Map data is missing types or POIs.");
@@ -71,7 +76,7 @@ export async function loadPoiData(url)
         requireObject(poi.map_position, "POI position");
         requireObject(poi.details, "POI details");
         const {x, y} = poi.map_position;
-        if(!ID_PATTERN.test(poi.id) || poi_ids.has(poi.id)
+        if(!isPoiId(poi.id) || poi_ids.has(poi.id)
             || !type_ids.has(poi.type_id)
             || typeof poi.name !== "string"
             || typeof poi.type_name !== "string"

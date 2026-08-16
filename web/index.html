@@ -21,12 +21,33 @@
                     </p>
                 </div>
                 <button id="panel-toggle" class="panel-toggle" type="button"
-                        aria-controls="filters" aria-expanded="true">
+                        aria-controls="panel-content" aria-expanded="true">
                     Places
                 </button>
             </header>
-            <section id="filters" class="filters" aria-label="Place types">
-            </section>
+            <div id="panel-content" class="panel-content">
+                <section id="progress-panel" class="progress-panel"
+                         aria-labelledby="progress-heading">
+                    <h2 id="progress-heading">Progress</h2>
+                    <p id="progress-summary" aria-live="polite">
+                        0 places done
+                    </p>
+                    <div class="progress-actions">
+                        <button id="export-progress" type="button" disabled>
+                            Export progress
+                        </button>
+                        <label class="button disabled" for="import-progress"
+                               aria-disabled="true">Import progress</label>
+                        <input id="import-progress" class="visually-hidden"
+                               type="file" accept="application/json,.json"
+                               disabled>
+                    </div>
+                    <p id="progress-message" class="progress-message"
+                       role="status"></p>
+                </section>
+                <section id="filters" class="filters"
+                         aria-label="Place types"></section>
+            </div>
         </aside>
         <div id="map" class="map" role="application"
              aria-label="Interactive Palworld map. Drag to pan and use the zoom

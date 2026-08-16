@@ -67,8 +67,44 @@ h1
 
 .filters
 {
+    flex: 1;
+    min-height: 0;
     overflow-y: auto;
     padding: 0.75rem 1rem 2rem;
+}
+
+.panel-content
+{
+    display: flex;
+    min-height: 0;
+    flex: 1;
+    flex-direction: column;
+}
+
+.progress-panel
+{
+    padding: 0.8rem 1rem;
+    border-bottom: 1px solid #334155;
+}
+
+.progress-panel h2
+{
+    margin: 0;
+    color: #93c5fd;
+    font-size: 1rem;
+}
+
+#progress-summary
+{
+    margin: 0.35rem 0 0.65rem;
+    font-size: 0.9rem;
+}
+
+.progress-actions
+{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
 }
 
 .filters fieldset
@@ -95,19 +131,33 @@ h1
     margin-bottom: 1rem;
 }
 
-button
+button,
+.button
 {
+    display: inline-flex;
+    align-items: center;
     padding: 0.45rem 0.7rem;
     border: 1px solid #64748b;
     border-radius: 0.35rem;
     background: #233249;
     color: inherit;
     cursor: pointer;
+    font: inherit;
+    line-height: normal;
+    text-align: center;
 }
 
-button:hover
+button:hover:not(:disabled),
+.button:hover:not(.disabled)
 {
     background: #334155;
+}
+
+button:disabled,
+.button.disabled
+{
+    cursor: not-allowed;
+    opacity: 0.55;
 }
 
 button:focus-visible,
@@ -115,6 +165,44 @@ input:focus-visible
 {
     outline: 3px solid #60a5fa;
     outline-offset: 2px;
+}
+
+.button:has(+ input:focus-visible)
+{
+    outline: 3px solid #60a5fa;
+    outline-offset: 2px;
+}
+
+.visually-hidden
+{
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    border: 0;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+}
+
+.progress-message
+{
+    min-height: 1.2em;
+    margin: 0.55rem 0 0;
+    color: #bfdbfe;
+    font-size: 0.8rem;
+}
+
+.progress-message.error
+{
+    color: #fecaca;
+}
+
+.progress-message.warning
+{
+    color: #fde68a;
 }
 
 .filter-row
@@ -182,6 +270,19 @@ input:focus-visible
     white-space: normal;
 }
 
+.poi-completion
+{
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: 2rem;
+    margin-top: 0.55rem;
+    padding-top: 0.45rem;
+    border-top: 1px solid #475569;
+    cursor: pointer;
+    font-weight: 700;
+}
+
 .panel-toggle
 {
     display: none;
@@ -213,7 +314,7 @@ input:focus-visible
         display: block;
     }
 
-    .filter-panel.is-collapsed .filters
+    .filter-panel.is-collapsed .panel-content
     {
         display: none;
     }

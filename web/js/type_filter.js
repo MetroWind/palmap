@@ -1,4 +1,5 @@
 import {typePin} from "./pin_catalog.js";
+import {isPoiId} from "./poi_id.js";
 
 
 const DEFAULT_TYPE_NAMES = new Set([
@@ -30,12 +31,18 @@ export function createTypeFilter(
 )
 {
     const counts = new Map(types.map((type) => [type.id, 0]));
+    const type_names = new Map(types.map((type) => [type.id, type.name]));
+    const poi_types = new Map();
+    const done_counts = new Map(types.map((type) => [type.id, 0]));
     for(const poi of pois)
     {
         counts.set(poi.type_id, counts.get(poi.type_id) + 1);
+        poi_types.set(poi.id, poi.type_id);
     }
     const visible = new Set(initial_visible);
+    const completed_ids = new Set();
     const inputs = new Map();
+    const labels = new Map();
     const categories = new Map();
     element.replaceChildren();
 
@@ -59,6 +66,81 @@ export function createTypeFilter(
             }
         }
         emit();
+    }
+
+    function labelText(type_id, done_count)
+    {
+        const done = done_count.toLocaleString();
+        const total = counts.get(type_id).toLocaleString();
+        return `${type_names.get(type_id)} (${done}/${total} done)`;
+    }
+
+    function updateCompletedLabels()
+    {
+        for(const type of types)
+        {
+            done_counts.set(type.id, 0);
+        }
+        for(const id of completed_ids)
+        {
+            const type_id = poi_types.get(id);
+            if(type_id !== undefined)
+            {
+                done_counts.set(type_id, done_counts.get(type_id) + 1);
+            }
+        }
+        for(const [type_id, label] of labels)
+        {
+            label.textContent = labelText(type_id, done_counts.get(type_id));
+        }
+    }
+
+    function setCompletedIds(ids)
+    {
+        const next = new Set();
+        for(const id of ids)
+        {
+            if(!isPoiId(id))
+            {
+                throw new TypeError("Completed IDs contain an invalid POI ID.");
+            }
+            next.add(id);
+        }
+        completed_ids.clear();
+        for(const id of next)
+        {
+            completed_ids.add(id);
+        }
+        updateCompletedLabels();
+    }
+
+    function setPoiCompleted(poi_id, completed)
+    {
+        if(!isPoiId(poi_id) || typeof completed !== "boolean")
+        {
+            throw new TypeError("A valid POI ID and boolean are required.");
+        }
+        if(completed_ids.has(poi_id) === completed)
+        {
+            return;
+        }
+        if(completed)
+        {
+            completed_ids.add(poi_id);
+        }
+        else
+        {
+            completed_ids.delete(poi_id);
+        }
+        const type_id = poi_types.get(poi_id);
+        if(type_id === undefined)
+        {
+            return;
+        }
+        const difference = completed ? 1 : -1;
+        const done_count = done_counts.get(type_id) + difference;
+        done_counts.set(type_id, done_count);
+        labels.get(type_id).textContent = labelText(type_id, done_count);
     }
 
     const actions = document.createElement("div");
@@ -125,13 +207,18 @@ export function createTypeFilter(
         }
         const label = document.createElement("label");
         label.htmlFor = input.id;
-        label.textContent = `${type.name} (${counts.get(type.id)})`;
+        label.textContent = labelText(type.id, 0);
         row.append(input, symbol, label);
         fieldset.append(row);
         inputs.set(type.id, input);
+        labels.set(type.id, label);
     }
     return Object.freeze({
         /** Returns a copy of the currently visible type IDs. */
         visibleTypes: () => new Set(visible),
+        /** Replaces the completion set shown in every type label. */
+        setCompletedIds,
+        /** Updates one POI's contribution to its type's done count. */
+        setPoiCompleted,
     });
 }

@@ -2,6 +2,7 @@ import hashlib
 import json
 import math
 from pathlib import Path
+import re
 import struct
 import unittest
 
@@ -133,6 +134,19 @@ class ArtifactTest(unittest.TestCase):
             "watchtower.png": (17, 20),
         }
         directory = ROOT / "web" / "images" / "type_pins"
+        catalog = (
+            ROOT / "web" / "js" / "pin_catalog.js"
+        ).read_text()
+        entries = re.findall(
+            r'url: "images/type_pins/([a-z0-9_]+\.png)",\s*'
+            r'size: \[(\d+), (\d+)\]',
+            catalog,
+        )
+        declared = {
+            name: (int(width), int(height))
+            for name, width, height in entries
+        }
+        self.assertEqual(expected, declared)
         for name, size in expected.items():
             with self.subTest(name=name):
                 header = (directory / name).read_bytes()[:24]

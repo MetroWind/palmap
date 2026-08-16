@@ -5,12 +5,14 @@ Palmap is a static, interactive map for Palworld. It combines an extracted
 custom type pins, and Alpha Pal portraits. Everything needed at runtime is in
 `web/`, so deployment consists of copying that directory to an HTTP server.
 
-This repository is currently a prototype. Leaflet 1.9.4 is its only browser
-dependency, and it is loaded from a CDN.
+The MVP lets users mark places done, saves progress in the browser, and moves
+progress between browsers with versioned JSON files. Leaflet 1.9.4 is the only
+browser dependency, and it is loaded from a CDN.
 
 ## Requirements
 
 - Python 3. Python dependencies are all from the standard library.
+- Node.js, used only for the dependency-free JavaScript unit tests.
 - ImageMagick 7 with WebP read/write support.
 - `curl`, used to download Pal portrait images.
 - A local HTTP server for development. ES modules and JSON loading do not work
@@ -20,9 +22,30 @@ Check the external programs with:
 
 ```shell
 python3 --version
+node --version
 magick -version
 curl --version
 ```
+
+## Progress and backups
+
+Open a place's tooltip and use its **Done** checkbox to update progress.
+Completed pins are muted on the map, and the sidebar reports how many places
+are done. Progress is saved under one versioned `localStorage` key containing
+only stable POI IDs.
+
+Browser storage belongs to the exact page origin. Changing the hostname,
+protocol, or port creates a different progress area, and clearing site data
+removes saved progress. Storage may also be unavailable under browser privacy
+settings. Palmap remains usable in that case and displays a warning that
+changes last only for the current tab.
+
+Use **Export progress** to download a backup before clearing browser data,
+moving Palmap to another origin, or deploying a data update. Use **Import
+progress** to select that JSON file and review the replacement confirmation.
+Import replaces the complete saved set; it does not merge. Palmap validates
+the whole file before confirmation and preserves valid saved IDs that are not
+available in the current map version.
 
 ## Build order
 
@@ -168,7 +191,7 @@ python3 tools/generate_tiles.py \
     --output-dir web/tiles
 ```
 
-The prototype fixes the tile size at 256 and the maximum native zoom at 5.
+The application fixes the tile size at 256 and the maximum native zoom at 5.
 Those values produce zoom levels 0 through 5 and 1,365 tiles in total. The
 script invokes ImageMagick once per zoom level: it resizes the full image with
 the Lanczos filter when needed, then crops that level into tiles in the same
@@ -176,7 +199,7 @@ command. Zoom 5 uses the 8192-by-8192 source without resizing.
 
 The optional `--method` argument selects the WebP compression effort from 0
 through 6; its default is 6. `--tile-size` and `--max-zoom` are exposed for
-explicitness, but the prototype rejects values other than 256 and 5.
+explicitness, but the tool rejects values other than 256 and 5.
 
 Generation occurs in a staging directory. The existing `web/tiles` directory
 is replaced only after all levels and the manifest have been produced and
@@ -344,10 +367,15 @@ python3 -m http.server 8000 --directory web
 Open `http://localhost:8000/`. To deploy, copy the contents of `web/` to the
 HTTP hosting directory; no Python code is needed on the server.
 
-Run the offline tests with:
+Run both offline test suites with:
 
 ```shell
 python3 -m unittest discover -s tests -v
+node --test tests/js/*.test.mjs
 ```
+
+The root `package.json` only tells Node to interpret browser modules as ES
+modules. There are no packages to install and no build step. Deployment is
+still a direct copy of `web/`; Node.js is not required by the deployed app.
 
 [fmodel-guide]: https://pwmodding.wiki/docs/developers/useful-tools/fmodel
